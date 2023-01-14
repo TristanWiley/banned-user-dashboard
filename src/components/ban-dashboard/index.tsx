@@ -1,16 +1,13 @@
 import { ApiClient, HelixBan } from '@twurple/api';
 import React, { useState } from 'react';
 
-// Create a props interface for the BanDashboard component
+import './index.css';
+
 interface BanDashboardProps {
   apiClient: ApiClient;
   userID: string;
 }
 
-/**
- * Create a new functional component named BanDashboard that will take an apiClient prop
- * and calls the API to get the list of banned users, paginated. Then displays them in a table.
- */
 export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID }) => {
   const [bannedUsers, setBannedUsers] = useState<HelixBan[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -18,7 +15,25 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
   const fetchBannedUsers = async () => {
     setLoading(true);
     const response = await apiClient.moderation.getBannedUsersPaginated(userID);
-    const users = await response.getAll();
+    // While lastKnownLimit is not 0 (i.e. we haven't been rate limited) and there are more pages, get the next page
+    let users: HelixBan[] = [];
+    let hasMore = true;
+    while (hasMore) {
+      const page = await response.getNext();
+      if (page.length === 0) {
+        hasMore = false;
+        break;
+      }
+      users = [...users, ...page]
+
+      // If we've been rate limited, wait for the rate limit to reset
+      if (apiClient.lastKnownRemainingRequests && apiClient.lastKnownRemainingRequests <= 1 && apiClient.lastKnownResetDate) {
+        const rateLimitReset = apiClient.lastKnownResetDate.getTime();
+        const now = new Date().getTime();
+        const timeToWait = rateLimitReset - now;
+        await new Promise((resolve) => setTimeout(resolve, timeToWait));
+      }
+    }
     setBannedUsers(users);
   };
 
@@ -37,9 +52,8 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
   // Sort the map by number of bans
   modBans = new Map([...modBans.entries()].sort((a, b) => b[1] - a[1]));
 
-  // While the fetch is happening, display a loading message
   return (
-    <div>
+    <div className="ban-dashboard">
       {/* Show total number of bans */}
       {bannedUsers && <h1>Total number of bans: {bannedUsers.length}</h1>}
       {bannedUsers === null && <button onClick={() => fetchBannedUsers()}>Fetch Banned Users</button>}
@@ -64,27 +78,5 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
       {!bannedUsers && loading && <p>Loading...</p>}
     </div>
   );
-
-  // return (
-  //   <div>
-  //     <button onClick={() => fetchBannedUsers()}>Fetch Banned Users</button>
-  //     <table>
-  //       <thead>
-  //         <tr>
-  //           <th>Username</th>
-  //           <th>Ban Reason</th>
-  //         </tr>
-  //       </thead>
-  //       <tbody>
-  //         {bannedUsers.map((user) => (
-  //           <tr key={user.userId}>
-  //             <td>{user.userDisplayName}</td>
-  //             <td>{user.moderatorDisplayName}</td>
-  //           </tr>
-  //         ))}
-  //       </tbody>
-  //     </table>
-  //   </div>
-  // );
 };
 
