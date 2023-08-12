@@ -11,7 +11,7 @@ body {
   padding: 0;
 }
 
-.login-button {
+.styled-button {
   background-color: #6441A5;
   color: white;
   padding: 10px 20px;
@@ -23,6 +23,12 @@ body {
   text-decoration: none;
 }
 
-.login-button:hover {
+.styled-button:hover {
   background-color: #5e3f96;
+}
+
+.debug-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
 }

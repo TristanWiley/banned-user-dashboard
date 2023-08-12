@@ -1,14 +1,17 @@
-import { ApiClient, HelixBan } from '@twurple/api';
-import React, { useState } from 'react';
+import { ApiClient, HelixBan } from "@twurple/api";
+import React, { useState } from "react";
 
-import './index.css';
+import "./index.css";
 
 interface BanDashboardProps {
   apiClient: ApiClient;
   userID: string;
 }
 
-export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID }) => {
+export const BanDashboard: React.FC<BanDashboardProps> = ({
+  apiClient,
+  userID,
+}) => {
   const [bannedUsers, setBannedUsers] = useState<HelixBan[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -24,10 +27,14 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
         hasMore = false;
         break;
       }
-      users = [...users, ...page]
+      users = [...users, ...page];
 
       // If we've been rate limited, wait for the rate limit to reset
-      if (apiClient.lastKnownRemainingRequests && apiClient.lastKnownRemainingRequests <= 1 && apiClient.lastKnownResetDate) {
+      if (
+        apiClient.lastKnownRemainingRequests &&
+        apiClient.lastKnownRemainingRequests <= 1 &&
+        apiClient.lastKnownResetDate
+      ) {
         const rateLimitReset = apiClient.lastKnownResetDate.getTime();
         const now = new Date().getTime();
         const timeToWait = rateLimitReset - now;
@@ -37,13 +44,28 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
     setBannedUsers(users);
   };
 
+  const copyAccessToken = () => {
+    const localstorageAccessToken = localStorage.getItem(
+      "banned-user-dashboard-access_token"
+    );
+
+    if (!localstorageAccessToken) {
+      return;
+    }
+
+    navigator.clipboard.writeText(localstorageAccessToken);
+  };
+
   // Fetch the banned users when the component mounts
   // Determine how many users each mod has banned
   // Display the list of mods in a table with the number of users they've banned
   let modBans = new Map<string, number>();
   bannedUsers?.forEach((user) => {
     if (modBans.has(user.moderatorDisplayName)) {
-      modBans.set(user.moderatorDisplayName, modBans.get(user.moderatorDisplayName)! + 1);
+      modBans.set(
+        user.moderatorDisplayName,
+        modBans.get(user.moderatorDisplayName)! + 1
+      );
     } else {
       modBans.set(user.moderatorDisplayName, 1);
     }
@@ -56,27 +78,36 @@ export const BanDashboard: React.FC<BanDashboardProps> = ({ apiClient, userID })
     <div className="ban-dashboard">
       {/* Show total number of bans */}
       {bannedUsers && <h1>Total number of bans: {bannedUsers.length}</h1>}
-      {bannedUsers === null && <button onClick={() => fetchBannedUsers()}>Fetch Banned Users</button>}
-      {bannedUsers && bannedUsers?.length !== 0 && <table>
-        <thead>
-          <tr>
-            <th>Moderator</th>
-            <th>Number of Bans</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from(modBans.entries()).map(([mod, numBans]) => (
-            <tr key={mod}>
-              <td>{mod}</td>
-              <td>{numBans}</td>
+      {bannedUsers === null && (
+        <a className="styled-button" onClick={() => fetchBannedUsers()}>
+          Fetch Banned Users
+        </a>
+      )}
+      {bannedUsers && bannedUsers?.length !== 0 && (
+        <table>
+          <thead>
+            <tr>
+              <th>Moderator</th>
+              <th>Number of Bans</th>
             </tr>
-          ))}
-        </tbody>
-      </table>}
+          </thead>
+          <tbody>
+            {Array.from(modBans.entries()).map(([mod, numBans]) => (
+              <tr key={mod}>
+                <td>{mod}</td>
+                <td>{numBans}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {bannedUsers && bannedUsers?.length === 0 && <p>No banned users</p>}
       {!bannedUsers && loading && <p>Loading...</p>}
+
+      <button className="debug-button" onClick={() => copyAccessToken()}>
+        DEBUG Only: Click to copy access token to send to sirhype
+      </button>
     </div>
   );
 };
-
