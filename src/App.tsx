@@ -9,7 +9,7 @@ const App: React.FC = () => {
   const [apiClient, setApiClient] = useState<ApiClient | null>(null);
   const [userID, setUserID] = useState<string | null>(null);
 
-  const loginURL = `https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=v9lka3ztfepkdn0mdqihfewpzx495n&redirect_uri=${window.location.origin}/banned-user-dashboard/&scope=moderation:read`;
+  const loginURL = `https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=v9lka3ztfepkdn0mdqihfewpzx495n&redirect_uri=${window.location.origin}/&scope=moderation:read`;
 
   // If access_token is in hash parameters, then get it and make an auth provider
   useEffect(() => {
