@@ -46,9 +46,14 @@ const App: React.FC = () => {
   // Get user_id from apiClient
   useEffect(() => {
     if (apiClient) {
-      apiClient.getTokenInfo().then((tokenInfo) => {
-        setUserID(tokenInfo.userId);
-      });
+      apiClient
+        .getTokenInfo()
+        .then((tokenInfo) => {
+          setUserID(tokenInfo.userId);
+        })
+        .catch((e) => {
+          localStorage.removeItem("banned-user-dashboard-access_token");
+        });
     }
   }, [apiClient]);
 
